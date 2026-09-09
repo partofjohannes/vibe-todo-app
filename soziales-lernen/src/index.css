@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background-color: #FBF9F6;
+  color: #1F2421;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Sprechtexte — alles was vorgelesen wird, hebt sich typografisch ab */
+.sprechtext {
+  font-family: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+}
+
+@keyframes einblenden {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-einblenden {
+  animation: einblenden 0.25s ease-out;
+}
+
+.pb-safe {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
+}
+
+/* Im Beamer-/Vollbildmodus keine Scrollbalken-Sprünge */
+html {
+  scrollbar-gutter: stable;
+}
