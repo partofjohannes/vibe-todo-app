@@ -42,11 +42,30 @@ darauf hin.
 
 ## Starten
 
+### Ohne alles: die Einzeldatei
+
+`Workshop-Bibliothek.html` im Projektordner ist die vollständige App in einer
+einzigen Datei — Doppelklick genügt. Kein Node, kein Terminal, kein Server, kein
+Internet. Alles ist eingebettet, die Datei lädt beim Öffnen nichts nach.
+
+Sie ist ein Schnappschuss des Codes: nach Änderungen neu erzeugen mit
+
+```bash
+npm run build:einzeldatei
+```
+
+Notizen liegen dabei im localStorage des Browsers, nicht in der Datei — ein
+anderer Browser oder gelöschte Browserdaten heißt: keine Notizen mehr.
+
+### Mit Node
+
 ```bash
 npm install
-npm run dev      # Entwicklung
-npm run build    # Produktionsbuild nach dist/
-npm run preview  # Build lokal ansehen
+npm run dev              # Entwicklung, http://localhost:5173
+npm run dev -- --host    # zusätzlich im lokalen Netz, z. B. fürs Tablet
+npm run build            # Produktionsbuild nach dist/
+npm run preview          # Build lokal ansehen
+npm run build:einzeldatei  # Workshop-Bibliothek.html neu erzeugen
 ```
 
 ## Inhalte pflegen

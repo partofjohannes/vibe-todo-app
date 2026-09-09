@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:einzeldatei": "vite build --config vite.config.einzeldatei.js && node skripte/einzeldatei.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",
