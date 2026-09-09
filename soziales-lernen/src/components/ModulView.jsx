@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import SchrittBlock from './SchrittBlock'
-import { getReihe, getModul, getPhasen, gesamtDauer } from '../data'
+import { getReihe, getModul, baueAblauf, gesamtDauer } from '../data'
+import { Anpassung } from './DurchfuehrungView'
 import { formatDatum } from '../utils/zeit'
+import { baueMarkdown, inZwischenablage } from '../utils/export'
 
 export default function ModulView({
   modulId,
@@ -13,15 +15,20 @@ export default function ModulView({
   onDurchfuehrungLoeschen,
 }) {
   const modul = getModul(modulId)
-  const [variante, setVariante] = useState('voll')
+  const [varianten, setVarianten] = useState([])
   const [offenePhase, setOffenePhase] = useState(null)
+  const [exportOffen, setExportOffen] = useState(false)
+
+  function variantenUmschalten(id) {
+    setVarianten((alt) => (alt.includes(id) ? alt.filter((x) => x !== id) : [...alt, id]))
+  }
 
   if (!modul) return null
   const reihe = getReihe(modul.reiheId)
 
   if (!modul.erfasst) return <NichtErfasst modul={modul} reihe={reihe} onZurueck={onZurueck} />
 
-  const phasen = getPhasen(modul, variante)
+  const phasen = baueAblauf(modul, varianten)
   const dauer = gesamtDauer(phasen)
   const eigene = durchfuehrungen.filter((d) => d.modulId === modul.id)
 
@@ -61,6 +68,17 @@ export default function ModulView({
         {modul.kernsatz}
       </p>
       <p className="mt-3 text-sm text-ink-500">{modul.vorwissen}</p>
+
+      {eigene.length > 0 && modul.naechstePruefung === 'Nach erstem Einsatz' && (
+        <div className="mt-4 rounded-2xl border border-mohn-200 bg-mohn-50 px-5 py-4">
+          <p className="text-sm leading-relaxed text-mohn-700">
+            <span className="font-semibold">Überprüfung fällig.</span> Das Modul steht auf „Entwurf“
+            mit „Nächste Überprüfung: nach erstem Einsatz“ — und du hast es{' '}
+            {eigene.length === 1 ? 'einmal' : `${eigene.length}-mal`} durchgeführt. Deine Notizen
+            stehen unten zum Export bereit.
+          </p>
+        </div>
+      )}
 
       <Abschnitt titel="Warum dieser Workshop">
         <div className="space-y-3">
@@ -123,6 +141,9 @@ export default function ModulView({
                 </button>
                 {offen && (
                   <div className="space-y-4 border-t border-sand-100 bg-sand-50 px-5 py-5">
+                    {phase.anpassungen.map((a, i) => (
+                      <Anpassung key={`a${i}`} anpassung={a} klein />
+                    ))}
                     {phase.schritte.map((schritt, i) => (
                       <SchrittBlock key={i} schritt={schritt} />
                     ))}
@@ -151,26 +172,49 @@ export default function ModulView({
       </Abschnitt>
 
       <Abschnitt titel="Methodische Alternativen">
+        <p className="mb-3 text-sm text-ink-500">
+          Mehrere Varianten sind kombinierbar. Was sie am Ablauf ändern, erscheint während der
+          Durchführung in der Phase, in der es greift.
+        </p>
         <div className="space-y-3">
-          {modul.alternativen.map((alt) => (
-            <div key={alt.id} className="rounded-2xl bg-sand-100 p-5">
-              <h3 className="font-semibold text-ink-900">{alt.wenn}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-ink-700">{alt.dann}</p>
-              {alt.phasen && (
-                <button
-                  type="button"
-                  onClick={() => setVariante(variante === alt.id ? 'voll' : alt.id)}
-                  className={`mt-3 rounded-full border px-3 py-1.5 text-sm transition ${
-                    variante === alt.id
-                      ? 'border-moos-600 bg-moos-600 text-white'
-                      : 'border-sand-300 bg-white text-ink-700 hover:border-moos-400'
-                  }`}
-                >
-                  {variante === alt.id ? '✓ Diese Variante aktiv' : 'Diese Variante wählen'}
-                </button>
-              )}
-            </div>
-          ))}
+          {modul.alternativen.map((alt) => {
+            const aktiv = varianten.includes(alt.id)
+            const anzahl = Object.keys(alt.anpassungen || {}).length
+            return (
+              <div
+                key={alt.id}
+                className={`rounded-2xl p-5 transition ${
+                  aktiv ? 'border border-moos-400 bg-moos-50' : 'bg-sand-100'
+                }`}
+              >
+                <h3 className="font-semibold text-ink-900">{alt.wenn}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-ink-700">{alt.dann}</p>
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => variantenUmschalten(alt.id)}
+                    className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                      aktiv
+                        ? 'border-moos-600 bg-moos-600 text-white'
+                        : 'border-sand-300 bg-white text-ink-700 hover:border-moos-400'
+                    }`}
+                  >
+                    {aktiv ? `✓ ${alt.name} aktiv` : `${alt.name} wählen`}
+                  </button>
+                  <span className="text-xs text-ink-500">
+                    {alt.phasen && `Phasen ${alt.phasen.join(', ')} · `}
+                    {anzahl > 0
+                      ? `${anzahl} Anpassung${anzahl > 1 ? 'en' : ''} im Ablauf`
+                      : 'keine Anpassung im Ablauf'}
+                    {alt.phasenZeit &&
+                      ` · Phase ${Object.keys(alt.phasenZeit)[0]} auf ${
+                        Object.values(alt.phasenZeit)[0]
+                      } Min`}
+                  </span>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </Abschnitt>
 
@@ -250,7 +294,18 @@ export default function ModulView({
       </Abschnitt>
 
       {eigene.length > 0 && (
-        <Abschnitt titel={`Deine Durchführungen (${eigene.length})`}>
+        <Abschnitt
+          titel={`Deine Durchführungen (${eigene.length})`}
+          aktion={
+            <button
+              type="button"
+              onClick={() => setExportOffen(true)}
+              className="rounded-full border border-sand-300 bg-white px-3 py-1.5 text-sm text-ink-700 transition hover:border-moos-400"
+            >
+              Für das Dokument exportieren
+            </button>
+          }
+        >
           <div className="space-y-3">
             {eigene.map((d) => (
               <div key={d.id} className="rounded-2xl border border-sand-200 bg-white p-5 shadow-sm">
@@ -297,19 +352,35 @@ export default function ModulView({
         </span>
       </p>
 
+      {exportOffen && (
+        <ExportFenster
+          markdown={baueMarkdown(modul, eigene)}
+          onSchliessen={() => setExportOffen(false)}
+        />
+      )}
+
       <div className="fixed inset-x-0 bottom-0 border-t border-sand-200 bg-sand-50/95 px-4 py-3 pb-safe backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center gap-3">
           <div className="min-w-0 flex-1 text-sm text-ink-700">
             <span className="font-semibold">{phasen.length} Phasen</span> · {dauer} Min
-            {variante !== 'voll' && (
-              <span className="ml-2 rounded-full bg-moos-600 px-2 py-0.5 text-xs text-white">
-                {modul.alternativen.find((a) => a.id === variante)?.name}
+            {varianten.length > 0 && (
+              <span className="ml-2 inline-flex flex-wrap gap-1 align-middle">
+                {modul.alternativen
+                  .filter((a) => varianten.includes(a.id))
+                  .map((a) => (
+                    <span
+                      key={a.id}
+                      className="rounded-full bg-moos-600 px-2 py-0.5 text-xs text-white"
+                    >
+                      {a.name}
+                    </span>
+                  ))}
               </span>
             )}
           </div>
           <button
             type="button"
-            onClick={() => onStarten(modul.id, variante)}
+            onClick={() => onStarten(modul.id, varianten)}
             className="shrink-0 rounded-full bg-moos-600 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-moos-800"
           >
             Workshop starten →
@@ -364,10 +435,13 @@ function NichtErfasst({ modul, reihe, onZurueck }) {
   )
 }
 
-function Abschnitt({ titel, children }) {
+function Abschnitt({ titel, aktion, children }) {
   return (
     <section className="mt-10">
-      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-ink-500">{titel}</h2>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-ink-500">{titel}</h2>
+        {aktion}
+      </div>
       {children}
     </section>
   )
@@ -395,6 +469,49 @@ function Materialgruppe({ titel, eintraege }) {
           </li>
         ))}
       </ul>
+    </div>
+  )
+}
+
+// Rückfluss ins Dokument: fertiger Markdown-Block zum Einfügen in die .md-Datei.
+function ExportFenster({ markdown, onSchliessen }) {
+  const [kopiert, setKopiert] = useState(false)
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink-900/40 p-0 sm:items-center sm:p-4">
+      <div className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl bg-sand-50 p-5 shadow-xl sm:rounded-3xl">
+        <div className="mb-3 flex items-center justify-between gap-4">
+          <h2 className="text-lg font-semibold text-ink-900">Für das Dokument</h2>
+          <button
+            type="button"
+            onClick={onSchliessen}
+            className="shrink-0 rounded-full bg-white px-4 py-2 text-sm text-ink-700 shadow-sm transition hover:text-moos-600"
+          >
+            Schließen
+          </button>
+        </div>
+
+        <p className="mb-3 text-sm leading-relaxed text-ink-700">
+          Einfügen in die Modul-Datei — die Beobachtungen stehen unten schon als Checkliste für
+          „Ideen für nächste Version“.
+        </p>
+
+        <textarea
+          readOnly
+          value={markdown}
+          rows={14}
+          onFocus={(e) => e.target.select()}
+          className="w-full resize-y rounded-xl border border-sand-200 bg-white p-4 font-mono text-xs leading-relaxed text-ink-900 outline-none focus:border-moos-400"
+        />
+
+        <button
+          type="button"
+          onClick={async () => setKopiert(await inZwischenablage(markdown))}
+          className="mt-3 w-full rounded-full bg-moos-600 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-moos-800"
+        >
+          {kopiert ? '✓ In die Zwischenablage kopiert' : 'Markdown kopieren'}
+        </button>
+      </div>
     </div>
   )
 }

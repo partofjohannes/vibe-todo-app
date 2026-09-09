@@ -151,7 +151,7 @@ const modul = {
       kurz: 'Dieselbe Situation, zwei Haltungen. Was macht das mit dem anderen?',
       schritte: [
         { typ: 'anweisung', text: 'Du erzählst eine kurze Situation:' },
-        { typ: 'sprechtext', text: 'Stellt euch vor: Ihr geht in die Pause. Euer Freund steht alleine da.' },
+        { typ: 'situationskarten' },
         { typ: 'anweisung', text: 'Du zeigst — mit dem Körper — zwei Versionen wie man hingeht:' },
         {
           typ: 'liste',
@@ -213,35 +213,45 @@ const modul = {
   schwierigeMomente: [
     {
       situation: 'Kinder kichern oder spielen den Clown',
+      phasen: [1, 2, 4],
       umgang:
         'Das gehört dazu — Körpersprache ist nah und komisch gleichzeitig. Kurz mitlachen, dann zurück:',
       spruch: 'Gut, das war die Spaß-Version. Zeig nochmal die echte.',
     },
     {
       situation: 'Ein Kind will gar nicht mitmachen',
+      phasen: [2, 3],
       umgang:
         'Nie drängen. Bei der Rate-Runde reicht zuschauen. Bei der Spiegel-Übung: Augen schließen ist genug. Kein Kind muss sich zeigen.',
       spruch: '',
     },
     {
       situation: 'Kinder machen sich über jemandes „Vorführung“ lustig',
+      phasen: [2, 4],
       umgang: 'Direkt und ruhig — und danach zum Kind: „Danke, das war mutig.“',
       spruch: 'Wir schauen hier — wir lachen nicht über jemanden. Das ist nicht die Regel hier.',
     },
     {
       situation: 'Kinder wollen wissen ob man Körpersprache „faken“ kann',
+      phasen: [2, 5],
       umgang: 'Ja — das kann man. Und das ist eine echte Frage.',
       spruch:
         'Manchmal hilft faken sogar ein bisschen. Aber meistens merkt man es trotzdem — weil der Rest des Körpers mitmuss.',
     },
     {
       situation: 'Die Klasse ist zu aufgedreht für die Stille-Phasen',
+      phasen: [3, 5],
       umgang:
         'Stille-Phase kürzen oder ganz weglassen. Die Bewegungsphasen sind der Kern — der Rest passt sich an.',
       spruch: '',
     },
   ],
 
+  // Jede Variante trägt Anpassungen pro Phase. Sie erscheinen im
+  // Durchführungs-Modus genau in der Phase, in der sie greifen.
+  // quelle: 'dokument'   = steht so im Modul
+  //         'abgeleitet' = folgt zwingend aus der Anweisung des Moduls,
+  //                        steht dort aber nicht ausformuliert
   alternativen: [
     {
       id: 'kurz',
@@ -249,6 +259,12 @@ const modul = {
       wenn: 'Wenn weniger Zeit ist (unter 30 Minuten)',
       dann: 'Phasen 1, 2 und 5 — das reicht. Einstieg zeigen / Rate-Spiel / kurzer Körper-kann-wählen-Abschluss.',
       phasen: [1, 2, 5],
+      anpassungen: {
+        5: {
+          text: 'Kurzer Körper-kann-wählen-Abschluss: Übung, Landung und Echo knapp halten.',
+          quelle: 'dokument',
+        },
+      },
     },
     {
       id: 'sitzend',
@@ -256,6 +272,28 @@ const modul = {
       wenn: 'Wenn kein Bewegungsraum da ist',
       dann: 'Alles im Sitzen: Gefühle nur mit Gesicht und Oberkörper zeigen. Hände, Schultern, Blick reichen. Die Körper-Runde am Ende: alle sitzen, zeigen eine Haltung auf dem Stuhl.',
       phasen: null,
+      anpassungen: {
+        1: {
+          text: 'Gefühle nur mit Gesicht und Oberkörper zeigen. Hände, Schultern, Blick reichen.',
+          quelle: 'dokument',
+        },
+        2: {
+          text: 'Kontrast-Runde vom Stuhl aus vormachen. Die zwei freiwilligen Kinder zeigen im Sitzen, statt in die Mitte zu kommen.',
+          quelle: 'abgeleitet',
+        },
+        3: {
+          text: 'Nicht aufstehen. Fäuste, Bauch und Schultern gehen im Sitzen. Statt auf der Stelle laufen: mit den Füßen wippen.',
+          quelle: 'abgeleitet',
+        },
+        4: {
+          text: 'Die zwei Versionen mit Oberkörper, Blick und Händen andeuten. Die freiwillige Zweier-Übung entfällt.',
+          quelle: 'abgeleitet',
+        },
+        5: {
+          text: 'Die Körper-Runde am Ende: alle sitzen, zeigen eine Haltung auf dem Stuhl.',
+          quelle: 'dokument',
+        },
+      },
     },
     {
       id: 'kleingruppe',
@@ -263,20 +301,105 @@ const modul = {
       wenn: 'Wenn die Gruppe sehr klein ist (Fördergruppe, 3–6 Kinder)',
       dann: 'Kein Rate-Spiel in der Mitte — stattdessen gegenseitig: ein Kind zeigt, ein anderes beschreibt was es sieht. Intimer, direkter, oft tiefer.',
       phasen: null,
+      anpassungen: {
+        2: {
+          text: 'Kein Rate-Spiel in der Mitte — stattdessen gegenseitig: ein Kind zeigt, ein anderes beschreibt was es sieht. Intimer, direkter, oft tiefer.',
+          quelle: 'dokument',
+        },
+        4: {
+          text: 'Die freiwillige Zweier-Übung geht hier mit allen — jedes Paar einmal.',
+          quelle: 'abgeleitet',
+        },
+      },
     },
     {
       id: 'gfk',
       name: 'Mit GFK-Bezug',
       wenn: 'Wenn die Klasse GFK Modul 1 kennt',
-      dann: 'Explizite Verbindung: „Ihr erinnert euch an das Wetter-Ritual? Heute schauen wir nicht was du sagst — sondern was dein Körper schon längst gezeigt hat.“ Die Gefühlskarten aus Modul 1 können als Vorlage dienen: Kinder stellen die Karte mit dem Körper nach.',
+      dann: 'Explizite Verbindung zum Wetter-Ritual herstellen. Die Gefühlskarten aus Modul 1 können als Vorlage dienen: Kinder stellen die Karte mit dem Körper nach.',
       phasen: null,
+      anpassungen: {
+        1: {
+          text: 'Vorweg die Verbindung herstellen: „Ihr erinnert euch an das Wetter-Ritual? Heute schauen wir nicht was du sagst — sondern was dein Körper schon längst gezeigt hat.“ Statt Wörter zu rufen, können die Gefühlskarten aus Modul 1 als Vorlage dienen: Kinder stellen die Karte mit dem Körper nach.',
+          quelle: 'dokument',
+        },
+        3: {
+          text: 'Die Gefühlskarten bei der Spiegel-Übung als Vorlage danebenlegen.',
+          quelle: 'dokument',
+        },
+      },
     },
     {
       id: 'konflikte',
       name: 'Konflikt-Fokus',
       wenn: 'Wenn das Thema Konflikte aktuell ist',
-      dann: 'Phase 4 (Situation mit zwei Körpern) verlängern — mehr Situationen durchspielen: auf jemanden zugehen der weint / jemanden der alleine ist / jemanden der gerade Streit hatte. Körpersprache als Brücken-Werkzeug.',
+      dann: 'Phase 4 (Situation mit zwei Körpern) verlängern — mehr Situationen durchspielen. Körpersprache als Brücken-Werkzeug.',
       phasen: null,
+      phasenZeit: { 4: 15 },
+      anpassungen: {
+        4: {
+          text: 'Der Kern der Stunde. Mehrere Situationskarten durchspielen statt nur einer — besonders die aus dem Konflikt-Umfeld. Körpersprache als Brücken-Werkzeug.',
+          quelle: 'dokument',
+        },
+      },
+    },
+  ],
+
+  // Situationskarten für Phase 4. Das Modul nennt vier Situationen selbst;
+  // die als 'vorschlag' markierten sind Ergänzungen, die noch nicht im
+  // Dokument stehen — beim Übertragen also prüfen oder streichen.
+  situationskarten: [
+    {
+      id: 's1',
+      text: 'Stellt euch vor: Ihr geht in die Pause. Euer Freund steht alleine da.',
+      herkunft: 'dokument',
+      quelle: 'Ablauf Phase 4',
+      hinweis: '',
+    },
+    {
+      id: 's2',
+      text: 'Stellt euch vor: Ein Kind weint. Ihr geht hin.',
+      herkunft: 'dokument',
+      quelle: 'Alternative „Konflikt-Fokus“',
+      hinweis: '',
+    },
+    {
+      id: 's3',
+      text: 'Stellt euch vor: Ein Kind ist ganz alleine. Ihr geht hin.',
+      herkunft: 'dokument',
+      quelle: 'Alternative „Konflikt-Fokus“',
+      hinweis: '',
+    },
+    {
+      id: 's4',
+      text: 'Stellt euch vor: Ein Kind hatte gerade Streit. Ihr geht hin.',
+      herkunft: 'dokument',
+      quelle: 'Alternative „Konflikt-Fokus“',
+      hinweis: '',
+    },
+    {
+      id: 's5',
+      text: 'Stellt euch vor: Ein Kind ist neu in der Klasse und steht in der Pause an der Wand.',
+      herkunft: 'vorschlag',
+      quelle: '',
+      hinweis:
+        'Fremdes Kind statt Freund — die Körpersprache muss mehr tragen, weil man sich nicht kennt. Verbindung zu Ausschluss Klasse 1.',
+    },
+    {
+      id: 's6',
+      text: 'Stellt euch vor: Ein Kind sitzt am Tisch und hat den Kopf auf den Armen.',
+      herkunft: 'vorschlag',
+      quelle: '',
+      hinweis:
+        'Der Körper zeigt etwas, bevor jemand redet — genau der Kern dieses Moduls. Gut als zweiter Durchgang.',
+    },
+    {
+      id: 's7',
+      text: 'Stellt euch vor: Ihr wollt bei einem Spiel mitmachen, das schon läuft.',
+      herkunft: 'vorschlag',
+      quelle: '',
+      hinweis:
+        'Hier geht es nicht ums Trösten, sondern ums Dazukommen — die andere Richtung. Verbindung zu Ausschluss Klasse 1.',
     },
   ],
 

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import SchrittBlock from './SchrittBlock'
 import SchwierigeMomente from './SchwierigeMomente'
-import { getModul, getPhasen, gesamtDauer } from '../data'
+import { getModul, baueAblauf, gesamtDauer } from '../data'
 import { formatMinSek, zeitStatus } from '../utils/zeit'
+import { inZwischenablage } from '../utils/export'
 
 const AMPEL = {
   gut: 'text-moos-600',
@@ -10,9 +11,9 @@ const AMPEL = {
   drueber: 'text-mohn-700',
 }
 
-export default function DurchfuehrungView({ modulId, variante, onBeenden, onAbbrechen }) {
+export default function DurchfuehrungView({ modulId, varianten = [], onBeenden, onAbbrechen }) {
   const modul = getModul(modulId)
-  const phasen = useMemo(() => getPhasen(modul, variante), [modul, variante])
+  const phasen = useMemo(() => baueAblauf(modul, varianten), [modul, varianten])
 
   const [abschnitt, setAbschnitt] = useState('vorbereitung')
   const [index, setIndex] = useState(0)
@@ -32,6 +33,7 @@ export default function DurchfuehrungView({ modulId, variante, onBeenden, onAbbr
 
   if (!modul) return null
 
+  const aktiveVarianten = (modul.alternativen || []).filter((a) => varianten.includes(a.id))
   const phase = phasen[index]
   const gesamtGeplant = gesamtDauer(phasen)
   const gesamtSek = startGesamt.current ? (jetzt - startGesamt.current) / 1000 : 0
@@ -69,7 +71,7 @@ export default function DurchfuehrungView({ modulId, variante, onBeenden, onAbbr
       <Vorbereitung
         modul={modul}
         phasen={phasen}
-        variante={variante}
+        aktiveVarianten={aktiveVarianten}
         abgehakt={abgehakt}
         setAbgehakt={setAbgehakt}
         onStarten={starten}
@@ -82,7 +84,7 @@ export default function DurchfuehrungView({ modulId, variante, onBeenden, onAbbr
     return (
       <Nachbereitung
         modul={modul}
-        variante={variante}
+        aktiveVarianten={aktiveVarianten}
         dauerMin={Math.max(1, Math.round(gesamtSek / 60))}
         onSpeichern={onBeenden}
         onVerwerfen={onAbbrechen}
@@ -134,12 +136,25 @@ export default function DurchfuehrungView({ modulId, variante, onBeenden, onAbbr
         <div className="mb-6">
           <div className="text-sm font-semibold uppercase tracking-wider text-moos-600">
             Phase {phase.nr} · {phase.minuten} Minuten
+            {phase.minuten !== phase.planMinuten && (
+              <span className="ml-2 font-normal normal-case tracking-normal text-ink-500">
+                (Plan: {phase.planMinuten})
+              </span>
+            )}
           </div>
           <h1 className="mt-1 text-2xl font-semibold leading-tight text-ink-900 md:text-3xl">
             {phase.titel}
           </h1>
           <p className="mt-1 text-ink-500">{phase.kurz}</p>
         </div>
+
+        {phase.anpassungen.length > 0 && (
+          <div className="mb-6 space-y-2">
+            {phase.anpassungen.map((a, i) => (
+              <Anpassung key={i} anpassung={a} />
+            ))}
+          </div>
+        )}
 
         <div className="space-y-5">
           {phase.schritte.map((schritt, i) => (
@@ -150,6 +165,7 @@ export default function DurchfuehrungView({ modulId, variante, onBeenden, onAbbr
 
       <SchwierigeMomente
         momente={modul.schwierigeMomente}
+        phasenNr={phase.nr}
         offen={momenteOffen}
         onSchliessen={() => setMomenteOffen(false)}
       />
@@ -184,8 +200,38 @@ export default function DurchfuehrungView({ modulId, variante, onBeenden, onAbbr
   )
 }
 
-function Vorbereitung({ modul, phasen, variante, abgehakt, setAbgehakt, onStarten, onAbbrechen }) {
-  const alt = modul.alternativen.find((a) => a.id === variante)
+// Anpassung aus einer gewählten Variante — steht dort, wo sie greift.
+export function Anpassung({ anpassung, klein = false }) {
+  return (
+    <div className="rounded-2xl border border-moos-100 bg-moos-50 px-4 py-3">
+      <div className="mb-1 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-moos-800">
+        <span aria-hidden="true">⇄</span>
+        <span>{anpassung.variante}</span>
+        {anpassung.quelle === 'abgeleitet' && (
+          <span
+            title="Folgt aus der Anweisung des Moduls, steht dort aber nicht ausformuliert"
+            className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium normal-case tracking-normal text-ink-500"
+          >
+            abgeleitet
+          </span>
+        )}
+      </div>
+      <p className={`leading-relaxed text-ink-900 ${klein ? 'text-sm' : 'text-base'}`}>
+        {anpassung.text}
+      </p>
+    </div>
+  )
+}
+
+function Vorbereitung({
+  modul,
+  phasen,
+  aktiveVarianten,
+  abgehakt,
+  setAbgehakt,
+  onStarten,
+  onAbbrechen,
+}) {
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
       <button
@@ -199,8 +245,20 @@ function Vorbereitung({ modul, phasen, variante, abgehakt, setAbgehakt, onStarte
       <h1 className="text-2xl font-semibold text-ink-900">Bereit für „{modul.titel}“?</h1>
       <p className="mt-2 text-ink-700">
         {phasen.length} Phasen · {gesamtDauer(phasen)} Minuten
-        {alt && <span className="text-moos-600"> · {alt.name}</span>}
       </p>
+
+      {aktiveVarianten.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {aktiveVarianten.map((a) => (
+            <span
+              key={a.id}
+              className="rounded-full bg-moos-600 px-3 py-1 text-xs font-medium text-white"
+            >
+              {a.name}
+            </span>
+          ))}
+        </div>
+      )}
 
       <section className="mt-8">
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-ink-500">
@@ -245,10 +303,11 @@ function Vorbereitung({ modul, phasen, variante, abgehakt, setAbgehakt, onStarte
   )
 }
 
-function Nachbereitung({ modul, variante, dauerMin, onSpeichern, onVerwerfen }) {
+function Nachbereitung({ modul, aktiveVarianten, dauerMin, onSpeichern, onVerwerfen }) {
   const [gruppe, setGruppe] = useState('')
   const [echo, setEcho] = useState('')
   const [aufgefallen, setAufgefallen] = useState('')
+  const [kopiert, setKopiert] = useState(false)
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
@@ -262,12 +321,34 @@ function Nachbereitung({ modul, variante, dauerMin, onSpeichern, onVerwerfen }) 
         </p>
       </div>
 
+      <section className="mt-6 rounded-2xl border border-sand-200 bg-white p-5 shadow-sm">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-ink-500">
+          Jetzt an die Lehrkraft weitergeben
+        </h2>
+        <p className="mt-1 text-sm text-ink-700">
+          Der Anker trägt nur weiter, wenn die Lehrkraft ihn kennt.
+        </p>
+        <p className="sprechtext mt-3 border-l-4 border-moos-400 pl-4 leading-relaxed text-ink-900">
+          „{modul.anker.briefing}“
+        </p>
+        <button
+          type="button"
+          onClick={async () => {
+            const erfolg = await inZwischenablage(modul.anker.briefing)
+            setKopiert(erfolg)
+          }}
+          className="mt-3 rounded-full border border-sand-300 px-4 py-2 text-sm text-ink-700 transition hover:border-moos-400"
+        >
+          {kopiert ? '✓ Kopiert' : 'Briefing kopieren'}
+        </button>
+      </section>
+
       <p className="mt-6 text-sm leading-relaxed text-ink-700">
         Das Kinder-Echo festhalten, solange es frisch ist. Was auffällt, wandert später in „Ideen für
         nächste Version“.
       </p>
 
-      <div className="mt-6 space-y-4">
+      <div className="mt-4 space-y-4">
         <Eingabe label="Gruppe / Klasse" wert={gruppe} setWert={setGruppe} platzhalter="z. B. 1b" />
         <Textfeld
           label="Kinder-Echo — eng oder weit?"
@@ -297,7 +378,7 @@ function Nachbereitung({ modul, variante, dauerMin, onSpeichern, onVerwerfen }) 
             onSpeichern({
               modulId: modul.id,
               datum: new Date().toISOString(),
-              variante,
+              varianten: aktiveVarianten.map((a) => a.name),
               dauerMin,
               gruppe: gruppe.trim(),
               echo: echo.trim(),

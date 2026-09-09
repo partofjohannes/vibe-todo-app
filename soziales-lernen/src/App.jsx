@@ -93,8 +93,8 @@ export default function App() {
         <ModulView
           modulId={ansicht.modulId}
           durchfuehrungen={durchfuehrungen}
-          onStarten={(modulId, variante) =>
-            oeffne({ name: 'durchfuehrung', modulId, variante })
+          onStarten={(modulId, varianten) =>
+            oeffne({ name: 'durchfuehrung', modulId, varianten })
           }
           onModulOeffnen={(m) => oeffne({ name: 'modul', modulId: m.id })}
           onReiheOeffnen={(id) => oeffne({ name: 'reihe', reiheId: id })}
@@ -106,7 +106,7 @@ export default function App() {
       {imWorkshop && (
         <DurchfuehrungView
           modulId={ansicht.modulId}
-          variante={ansicht.variante}
+          varianten={ansicht.varianten}
           onBeenden={durchfuehrungSpeichern}
           onAbbrechen={zurueck}
         />

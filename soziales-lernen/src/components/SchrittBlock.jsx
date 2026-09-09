@@ -1,3 +1,5 @@
+import Situationskarten from './Situationskarten'
+
 // Ein einzelner Schritt im Ablauf. Der Typ entscheidet, wie er aussieht —
 // Sprechtexte müssen auf einen Blick als "das lese ich vor" erkennbar sein.
 
@@ -155,6 +157,8 @@ export default function SchrittBlock({ schritt, gross = false }) {
       return <Karten text={schritt.text} items={schritt.items} gross={gross} />
     case 'liste':
       return <Liste text={schritt.text} items={schritt.items} gross={gross} />
+    case 'situationskarten':
+      return <Situationskarten karten={schritt.karten} gross={gross} />
     case 'landung':
       return <Besonders schritt={schritt} gross={gross} label="Landung" icon="🕊️" />
     case 'echo':
