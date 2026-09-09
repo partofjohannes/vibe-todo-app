@@ -68,6 +68,17 @@ npm run preview          # Build lokal ansehen
 npm run build:einzeldatei  # Workshop-Bibliothek.html neu erzeugen
 ```
 
+## Im Netz veröffentlichen
+
+`.github/workflows/pages.yml` baut die App bei jedem Push auf `main` und stellt
+sie auf GitHub Pages bereit:
+
+    https://partofjohannes.github.io/vibe-todo-app/
+
+Einmalig nötig: im Repository unter **Settings → Pages** als Source
+**GitHub Actions** wählen. Der Workflow setzt `VITE_BASE=/vibe-todo-app/`,
+weil die App dort in einem Unterordner liegt; lokal bleibt die Basis `/`.
+
 ## Inhalte pflegen
 
 Workshop-Inhalte liegen als Daten in `src/data/`, nicht im Code:

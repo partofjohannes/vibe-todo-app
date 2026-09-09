@@ -1,0 +1,57 @@
+name: Workshop-Bibliothek veröffentlichen
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'soziales-lernen/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Läuft eine Veröffentlichung noch, wartet die nächste, statt sie abzubrechen
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  bauen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: soziales-lernen/package-lock.json
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+        working-directory: soziales-lernen
+
+      - name: Bauen
+        run: npm run build
+        working-directory: soziales-lernen
+        env:
+          VITE_BASE: /vibe-todo-app/
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: soziales-lernen/dist
+
+  veroeffentlichen:
+    needs: bauen
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.veroeffentlichung.outputs.page_url }}
+    steps:
+      - id: veroeffentlichung
+        uses: actions/deploy-pages@v4
