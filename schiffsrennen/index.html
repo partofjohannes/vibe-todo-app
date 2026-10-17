@@ -114,6 +114,11 @@ kbd{font-family:var(--f-data);font-weight:600;background:rgba(255,255,255,.12);b
 .pad.horn{width:clamp(70px,17vw,92px);height:clamp(70px,17vw,92px);font-size:16px;font-family:var(--f-display);margin-bottom:10px}
 .pad svg{width:46%;height:46%}
 .mid{display:flex;gap:12px;align-items:flex-end}
+.col{display:flex;flex-direction:column;align-items:center;gap:8px}
+.pad.look{width:clamp(56px,14vw,72px);height:clamp(56px,14vw,72px);font-size:22px;display:flex;flex-direction:column;justify-content:center;line-height:1}
+.pad.look small{font-family:var(--f-display);font-size:12px;margin-top:2px}
+.pad.look[aria-pressed="true"]{background:rgba(255,201,40,.9);color:var(--signal-ink)}
+.lookbadge{position:absolute;left:50%;transform:translateX(-50%);top:calc(132px + env(safe-area-inset-top,0px));background:rgba(8,40,60,.8);color:#fff;font-family:var(--f-display);font-size:20px;padding:6px 16px 8px;border-radius:999px;pointer-events:none;white-space:nowrap}
 .pad.turbo{width:clamp(76px,19vw,104px);height:clamp(76px,19vw,104px);font-family:var(--f-display);font-size:15px;display:flex;flex-direction:column;justify-content:center;gap:0;opacity:.55}
 .pad.turbo svg{width:40%;height:40%}
 .pad.turbo.ready{opacity:1;background:rgba(255,120,40,.85);box-shadow:inset 0 0 0 3px #ffd36b,0 0 22px rgba(255,160,60,.8);animation:glow 1s ease-in-out infinite alternate}
@@ -201,7 +206,7 @@ kbd{font-family:var(--f-data);font-weight:600;background:rgba(255,255,255,.12);b
 
     <div class="go-row">
       <button id="go">Leinen los!</button>
-      <p class="hint">In jedem Hafen halten alle Schiffe kurz an, bis der gelbe Kreis voll ist.<br>Lenken mit <kbd>◀</kbd> <kbd>▶</kbd> oder den großen Knöpfen.<br>3 goldene Sterne sammeln, dann Turbo mit <kbd>▲</kbd>.<br>Hupen mit der <kbd>Leertaste</kbd>. Segelboote machen dann Platz.<br>Tipp im Rennen auf ein anderes Schiff, dann steuerst du das.<br>Kamera wechseln mit 🎥 oder der Taste <kbd>C</kbd>.</p>
+      <p class="hint">In jedem Hafen halten alle Schiffe kurz an, bis der gelbe Kreis voll ist.<br>Lenken mit <kbd>◀</kbd> <kbd>▶</kbd> oder den großen Knöpfen.<br>3 goldene Sterne sammeln, dann Turbo mit <kbd>▲</kbd>.<br>Hupen mit der <kbd>Leertaste</kbd>. Segelboote machen dann Platz.<br>Tipp im Rennen auf ein anderes Schiff, dann steuerst du das.<br>Kamera wechseln mit 🎥 oder der Taste <kbd>C</kbd>.<br>Nach hinten schauen mit 👀 oder <kbd>▼</kbd>.</p>
     </div>
   </div>
 </main>
@@ -219,11 +224,15 @@ kbd{font-family:var(--f-data);font-weight:600;background:rgba(255,255,255,.12);b
   </div>
   <div class="count" id="count" hidden></div>
   <div class="toast" id="toast" hidden></div>
+  <div class="lookbadge" id="lookbadge" hidden>👀 Blick nach hinten</div>
   <div class="wait" id="wait" hidden><span>Warte, bis alle im Ziel sind.<br><small>Tipp auf ein Schiff, dann hilfst du ihm.</small></span><button id="fast">⏩ Vorspulen</button></div>
   <div class="pads">
     <button class="pad" id="pad-l" aria-label="Nach links lenken"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M7 1 2 5l5 4z" fill="currentColor"/></svg></button>
     <div class="mid">
-      <button class="pad horn" id="pad-h" aria-label="Hupen">Tuuut!</button>
+      <div class="col">
+        <button class="pad look" id="pad-b" aria-label="Nach hinten schauen" aria-pressed="false"><span aria-hidden="true">👀</span><small>Hinten</small></button>
+        <button class="pad horn" id="pad-h" aria-label="Hupen">Tuuut!</button>
+      </div>
       <button class="pad turbo" id="pad-t" aria-label="Turbo zünden"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1 9 6H6.5V9h-3V6H1z" fill="currentColor"/></svg><span>Turbo <b id="turbo-n"></b></span></button>
     </div>
     <button class="pad" id="pad-r" aria-label="Nach rechts lenken"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M3 1l5 4-5 4z" fill="currentColor"/></svg></button>
@@ -679,7 +688,7 @@ const Sound={
    Spielzustand
    ========================================================= */
 const G={ state:'menu', ships:[], obs:[], stars:[], decor:[], parts:[], confetti:[], t:0, cd:0, camP:0, camX:0,
-  keys:{l:false,r:false}, pads:{l:new Set(),r:new Set()}, player:null, theme:'karibik', speed:'easy', len:'mittel', count:6, cam:clamp(+(store('schiff-cam')||0)||0,0,4), camRot:0, fast:false, hudKey:'', toastT:0, choice:0, endT:0, lastCount:0, hornCd:0 };
+  keys:{l:false,r:false}, pads:{l:new Set(),r:new Set()}, player:null, theme:'karibik', speed:'easy', len:'mittel', count:6, look:0, lookHold:false, lookToggle:false, cam:clamp(+(store('schiff-cam')||0)||0,0,4), camRot:0, fast:false, hudKey:'', toastT:0, choice:0, endT:0, lastCount:0, hornCd:0 };
 const cv=$('#cv'), ctx=cv.getContext('2d');
 let cw=0, ch=0, dpr=1, SC=1;
 
@@ -749,7 +758,7 @@ function startRace(){
     d.setAttribute('aria-label',s.cfg.name+' steuern'); d.addEventListener('pointerdown',e=>{ e.preventDefault(); switchTo(s); }); bar.appendChild(d); s.dot=d; }
   for(const q of PORTS){ const m=document.createElement('span'); m.className='port'; m.style.left=(q.p/LEN*100)+'%'; bar.insertBefore(m,bar.firstChild); }
   G.hudKey='';
-  $('#menu').hidden=true; $('#game').hidden=false; $('#result').hidden=true; $('#toast').hidden=true; $('#wait').hidden=true; G.fast=false; $('#fast').textContent='⏩ Vorspulen';
+  $('#menu').hidden=true; $('#game').hidden=false; $('#result').hidden=true; $('#toast').hidden=true; $('#wait').hidden=true; G.fast=false; G.look=0; G.lookHold=false; setLook(false); $('#lookbadge').hidden=true; $('#fast').textContent='⏩ Vorspulen';
   resize(); Sound.seaStart();
   $('#mute').textContent=Sound.muted?'🔇':'🔊';
 }
@@ -924,6 +933,10 @@ function update(dt){
   G.camX+=(cxT-G.camX)*Math.min(1,3*dt);
   const rotT=Math.atan2(tx(pl.p+260)-tx(pl.p-60),320)*.85+pl.hd*.15;
   G.camRot+=(rotT-G.camRot)*Math.min(1,2.2*dt);
+  // Blick nach hinten: Kamera dreht sich sanft um 180 Grad
+  const lbT=(G.lookHold||G.lookToggle)?1:0;
+  G.look+=(lbT-G.look)*Math.min(1,6*dt);
+  const lbOn=G.look>.5; if(lbOn!==!$('#lookbadge').hidden) $('#lookbadge').hidden=!lbOn;
 
   // Anzeige
   if(racing||G.state==='count'){
@@ -1159,7 +1172,7 @@ function render(){
   const c=ctx, th=THEMES[G.theme], t=G.t, cam=CAMS[G.cam], s=SC*cam.zoom, anchor=cam.tilt?ch-SH*.3:ch*cam.anchor;
   c.setTransform(dpr,0,0,dpr,0,0);
   c.fillStyle=th.land; c.fillRect(0,0,cw,ch);
-  const view=new DOMMatrix().scaleSelf(dpr,dpr).translateSelf(cw/2,anchor).rotateSelf(cam.rotate?-G.camRot*180/Math.PI:0).scaleSelf(s,s).translateSelf(-G.camX,G.camP);
+  const view=new DOMMatrix().scaleSelf(dpr,dpr).translateSelf(cw/2,anchor).rotateSelf((cam.rotate?-G.camRot*180/Math.PI:0)+G.look*180).scaleSelf(s,s).translateSelf(-G.camX,G.camP);
   c.setTransform(view); G.view=view; G.viewInv=view.inverse();
   // sichtbarer Ausschnitt der Spielwelt
   let pA=1e9, pB=-1e9, xA=1e9, xB=-1e9;
@@ -1212,7 +1225,7 @@ function render(){
   // Bildschirm-Ebene: Pfeil über dem eigenen Schiff
   c.setTransform(dpr,0,0,dpr,0,0);
   const pl=G.player, SL=pl?pl.L:0;
-  if(pl){ const sp=G.view.transformPoint({x:pl.x+Math.sin(pl.hd)*SL*.55, y:-(pl.p+Math.cos(pl.hd)*SL*.55)}), k=cam.tilt?1.6:1;
+  if(pl){ const ends=[1,-1].map(e=>G.view.transformPoint({x:pl.x+Math.sin(pl.hd)*SL*.55*e, y:-(pl.p+Math.cos(pl.hd)*SL*.55*e)})), sp=ends[0].y<ends[1].y?ends[0]:ends[1], k=cam.tilt?1.6:1;
     const sx=sp.x/dpr, sy=sp.y/dpr-14*k-Math.sin(t*5)*4*k;
     c.save(); c.translate(sx,sy); c.scale(k,k); c.translate(-sx,-sy);
     c.fillStyle='#ffc928'; c.strokeStyle='#3a2a00'; c.lineWidth=2.5;
@@ -1256,6 +1269,8 @@ $('#again').addEventListener('click',startRace);
 $('#back').addEventListener('click',showMenu);
 $('#home').addEventListener('click',showMenu);
 $('#camb').addEventListener('click',()=>setCam(G.cam+1,true));
+function setLook(on){ G.lookToggle=on; $('#pad-b').setAttribute('aria-pressed',on?'true':'false'); }
+$('#pad-b').addEventListener('pointerdown',e=>{ e.preventDefault(); setLook(!G.lookToggle); });
 $('#fast').addEventListener('click',()=>{ G.fast=!G.fast; $('#fast').textContent=G.fast?'▶ Normal':'⏩ Vorspulen'; });
 $('#mute').addEventListener('click',()=>{ Sound.init(); Sound.setMuted(!Sound.muted); $('#mute').textContent=Sound.muted?'🔇':'🔊'; $('#mute').setAttribute('aria-label',Sound.muted?'Ton an':'Ton aus'); });
 
@@ -1289,6 +1304,7 @@ addEventListener('keydown',e=>{
   if(k==='ArrowLeft'||k==='a'||k==='A'){ G.keys.l=true; e.preventDefault(); }
   else if(k==='ArrowRight'||k==='d'||k==='D'){ G.keys.r=true; e.preventDefault(); }
   else if(k==='c'||k==='C'||k==='k'||k==='K'){ setCam(G.cam+1,true); }
+  else if(k==='ArrowDown'||k==='s'||k==='S'){ G.lookHold=true; e.preventDefault(); }
   else if(k==='ArrowUp'||k==='w'||k==='W'){ useTurbo(G.player); e.preventDefault(); }
   else if(k===' '||k==='h'||k==='H'){ if(!$('#result').hidden) return; honk(); e.preventDefault(); }
 });
@@ -1296,8 +1312,9 @@ addEventListener('keyup',e=>{
   const k=e.key;
   if(k==='ArrowLeft'||k==='a'||k==='A') G.keys.l=false;
   if(k==='ArrowRight'||k==='d'||k==='D') G.keys.r=false;
+  if(k==='ArrowDown'||k==='s'||k==='S') G.lookHold=false;
 });
-addEventListener('blur',()=>{ G.keys.l=G.keys.r=false; G.pads.l.clear(); G.pads.r.clear(); });
+addEventListener('blur',()=>{ G.keys.l=G.keys.r=false; G.lookHold=false; G.pads.l.clear(); G.pads.r.clear(); });
 </script>
 </body>
 </html>
