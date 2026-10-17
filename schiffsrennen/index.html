@@ -83,7 +83,13 @@ kbd{font-family:var(--f-data);font-weight:600;background:rgba(255,255,255,.12);b
 
 /* ---------- Rennen ---------- */
 #game{position:fixed;inset:0;background:#139fba;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden}
-#cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+#cv{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
+#game.tilt{background:linear-gradient(180deg,#7fc1e6 0%,#cfe9f6 22%,#e8f4f8 34%)}
+.fog{position:absolute;left:0;right:0;top:0;height:42%;pointer-events:none;display:none;background:linear-gradient(180deg,rgba(214,236,246,1) 0%,rgba(214,236,246,.95) 45%,rgba(214,236,246,0) 100%)}
+#game.tilt .fog{display:block}
+.wait{position:absolute;left:50%;transform:translateX(-50%);top:calc(130px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:12px;background:rgba(8,40,60,.82);color:#fff;border-radius:18px;padding:10px 12px 10px 16px;font-weight:800;line-height:1.25;width:max-content;max-width:calc(100% - 32px);box-sizing:border-box}
+.wait small{font-weight:700;color:#bcd3df}
+.wait button{flex:none;border:0;border-radius:999px;background:var(--signal);color:var(--signal-ink);font-family:var(--f-display);font-size:18px;padding:8px 14px 10px}
 .hud{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:10px;
   padding-top:calc(10px + env(safe-area-inset-top,0px));padding-bottom:10px;
   padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));pointer-events:none}
@@ -195,22 +201,25 @@ kbd{font-family:var(--f-data);font-weight:600;background:rgba(255,255,255,.12);b
 
     <div class="go-row">
       <button id="go">Leinen los!</button>
-      <p class="hint">In jedem Hafen halten alle Schiffe kurz an, bis der gelbe Kreis voll ist.<br>Lenken mit <kbd>◀</kbd> <kbd>▶</kbd> oder den großen Knöpfen.<br>3 goldene Sterne sammeln, dann Turbo mit <kbd>▲</kbd>.<br>Hupen mit der <kbd>Leertaste</kbd>. Segelboote machen dann Platz.<br>Tipp im Rennen auf ein anderes Schiff, dann steuerst du das.</p>
+      <p class="hint">In jedem Hafen halten alle Schiffe kurz an, bis der gelbe Kreis voll ist.<br>Lenken mit <kbd>◀</kbd> <kbd>▶</kbd> oder den großen Knöpfen.<br>3 goldene Sterne sammeln, dann Turbo mit <kbd>▲</kbd>.<br>Hupen mit der <kbd>Leertaste</kbd>. Segelboote machen dann Platz.<br>Tipp im Rennen auf ein anderes Schiff, dann steuerst du das.<br>Kamera wechseln mit 🎥 oder der Taste <kbd>C</kbd>.</p>
     </div>
   </div>
 </main>
 
 <div id="game" hidden>
   <canvas id="cv"></canvas>
+  <div class="fog" aria-hidden="true"></div>
   <div class="hud">
     <button class="round" id="home" aria-label="Zurück zum Hafen">✕</button>
     <div class="bar" id="bar" aria-hidden="true"></div>
     <div class="starmeter" id="starmeter" aria-label="Gesammelte Sterne"><i></i><i></i><i></i></div>
     <div class="place" id="place" aria-live="polite">1.</div>
+    <button class="round" id="camb" aria-label="Kamera wechseln">🎥</button>
     <button class="round" id="mute" aria-label="Ton aus">🔊</button>
   </div>
   <div class="count" id="count" hidden></div>
   <div class="toast" id="toast" hidden></div>
+  <div class="wait" id="wait" hidden><span>Warte, bis alle im Ziel sind.<br><small>Tipp auf ein Schiff, dann hilfst du ihm.</small></span><button id="fast">⏩ Vorspulen</button></div>
   <div class="pads">
     <button class="pad" id="pad-l" aria-label="Nach links lenken"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M7 1 2 5l5 4z" fill="currentColor"/></svg></button>
     <div class="mid">
@@ -670,14 +679,46 @@ const Sound={
    Spielzustand
    ========================================================= */
 const G={ state:'menu', ships:[], obs:[], stars:[], decor:[], parts:[], confetti:[], t:0, cd:0, camP:0, camX:0,
-  keys:{l:false,r:false}, pads:{l:new Set(),r:new Set()}, player:null, theme:'karibik', speed:'easy', len:'mittel', count:6, hudKey:'', toastT:0, choice:0, endT:0, lastCount:0, hornCd:0 };
+  keys:{l:false,r:false}, pads:{l:new Set(),r:new Set()}, player:null, theme:'karibik', speed:'easy', len:'mittel', count:6, cam:clamp(+(store('schiff-cam')||0)||0,0,4), camRot:0, fast:false, hudKey:'', toastT:0, choice:0, endT:0, lastCount:0, hornCd:0 };
 const cv=$('#cv'), ctx=cv.getContext('2d');
 let cw=0, ch=0, dpr=1, SC=1;
 
+const CAMS=[
+  { name:'Von oben',          zoom:1,    anchor:.7,  rotate:false, tilt:0 },
+  { name:'Ganz nah',          zoom:1.8,  anchor:.62, rotate:false, tilt:0 },
+  { name:'Überblick',         zoom:.48,  anchor:.6,  rotate:false, tilt:0 },
+  { name:'Mitfahren',         zoom:1.15, anchor:.72, rotate:true,  tilt:0 },
+  { name:'Hinter dem Schiff', zoom:1.7,  anchor:0,   rotate:true,  tilt:40 },
+];
+let SW=0, SH=0, TILT=null;   // Bildschirmgröße und Daten der schrägen 3D-Sicht
 function resize(){
-  dpr=Math.min(2,window.devicePixelRatio||1); cw=cv.clientWidth||innerWidth; ch=cv.clientHeight||innerHeight;
+  const gm=$('#game'); SW=gm.clientWidth||innerWidth; SH=gm.clientHeight||innerHeight;
+  const cam=CAMS[G.cam];
+  if(cam.tilt){
+    // Für die schräge Sicht ist die Leinwand größer als der Bildschirm und wird nach hinten gekippt
+    const W2=SW*2.4, H2=SH*2.2, a=cam.tilt*Math.PI/180, P=SH*1.1;
+    TILT={W2,H2,a,P,left:-(W2-SW)/2,top:SH-H2};
+    Object.assign(cv.style,{left:TILT.left+'px',top:TILT.top+'px',width:W2+'px',height:H2+'px',transformOrigin:'50% 100%',
+      transform:'perspective('+P+'px) rotateX('+cam.tilt+'deg)'});
+    cw=W2; ch=H2; dpr=Math.min(1,Math.sqrt(3.6e6/(W2*H2)));
+    gm.classList.add('tilt');
+  } else {
+    TILT=null; Object.assign(cv.style,{left:'0px',top:'0px',width:'100%',height:'100%',transform:'none'});
+    cw=SW; ch=SH; dpr=Math.min(2,window.devicePixelRatio||1); gm.classList.remove('tilt');
+  }
   cv.width=Math.round(cw*dpr); cv.height=Math.round(ch*dpr);
-  SC=Math.min(cw/580, ch/720); SC=clamp(SC,.45,1.4);
+  SC=Math.min(SW/580, SH/720); SC=clamp(SC,.45,1.4);
+}
+// Bildschirmpunkt (relativ zum Spielfeld) in einen Punkt auf der Leinwand umrechnen
+function screenToCanvas(X,Y){
+  if(!TILT) return {x:X,y:Y};
+  const {W2,H2,a,P,left,top}=TILT, u=X-left-W2/2, v=Y-top-H2;
+  const ry=v/(Math.cos(a)+v*Math.sin(a)/P), w=1-ry*Math.sin(a)/P;
+  return {x:u*w+W2/2, y:ry+H2};
+}
+function setCam(i,announce){
+  G.cam=(i+CAMS.length)%CAMS.length; store('schiff-cam',String(G.cam)); resize();
+  if(announce) showToast('Kamera: '+CAMS[G.cam].name,1500);
 }
 addEventListener('resize',()=>{ if(!$('#game').hidden) resize(); });
 
@@ -708,7 +749,7 @@ function startRace(){
     d.setAttribute('aria-label',s.cfg.name+' steuern'); d.addEventListener('pointerdown',e=>{ e.preventDefault(); switchTo(s); }); bar.appendChild(d); s.dot=d; }
   for(const q of PORTS){ const m=document.createElement('span'); m.className='port'; m.style.left=(q.p/LEN*100)+'%'; bar.insertBefore(m,bar.firstChild); }
   G.hudKey='';
-  $('#menu').hidden=true; $('#game').hidden=false; $('#result').hidden=true; $('#toast').hidden=true;
+  $('#menu').hidden=true; $('#game').hidden=false; $('#result').hidden=true; $('#toast').hidden=true; $('#wait').hidden=true; G.fast=false; $('#fast').textContent='⏩ Vorspulen';
   resize(); Sound.seaStart();
   $('#mute').textContent=Sound.muted?'🔇':'🔊';
 }
@@ -795,7 +836,7 @@ function update(dt){
         else if(d<=0){ s.stopT=STOPTIME; if(s.isPlayer){ Sound.dingdong(); showToast('Hafen '+port.name+': Passagiere steigen ein!',2600); } }
         else if(d<320) vT=Math.min(vT,35+d*.75);
       }
-      if(s.p>LEN) vT=Math.min(vT,95);
+      if(s.p>LEN) vT=Math.min(vT,s.p>LEN+2300?0:95);
     }
     s.v+=(vT-s.v)*Math.min(1,(vT>s.v?.9:2)*dt);
     s.vx+=(vxT-s.vx)*Math.min(1,5*dt);
@@ -816,8 +857,14 @@ function update(dt){
         addPart('foam',bx,bp,cs*sd*(25+s.v*.15),-sn*sd*(25+s.v*.15),1.5,rand(2.5,4),9); }
     }
     // Ziel
-    if(!s.done && s.p>=LEN){ s.done=true; s.ft=G.t;
-      if(s.isPlayer){ G.state='done'; G.endT=2.3; const pl=placeOf(s); if(pl===1){ Sound.fanfare(); burstConfetti(); } else Sound.chime(); } }
+    if(!s.done && s.p>=LEN){ s.done=true; s.ft=G.t; s.byPlayer=s.isPlayer;
+      for(let k=0;k<16;k++) addPart('spark',s.x,LEN,rand(-120,120),rand(-60,120),.9,rand(2,4),-2);
+      const pl=placeOf(s);
+      if(s.isPlayer){ if(pl===1){ Sound.fanfare(); burstConfetti(); } else Sound.chime();
+        showToast(pl+'. Platz! Du bist im Ziel!',2800);
+        if(!G.ships.every(x=>x.done)) setTimeout(()=>{ if(G.state==='race') $('#wait').hidden=false; },2000); }
+      else if(Math.abs(s.p-G.player.p)<900) Sound.horn(rand(.8,1.25),.12);
+      if(G.ships.every(x=>x.done)){ G.state='done'; G.endT=2.2; G.fast=false; $('#wait').hidden=true; } }
   }
 
   // Hindernisse bewegen
@@ -875,6 +922,8 @@ function update(dt){
   G.camP+=(pl.p-G.camP)*Math.min(1,8*dt);
   const cxT=pl.x*.6+tx(pl.p+220)*.4;
   G.camX+=(cxT-G.camX)*Math.min(1,3*dt);
+  const rotT=Math.atan2(tx(pl.p+260)-tx(pl.p-60),320)*.85+pl.hd*.15;
+  G.camRot+=(rotT-G.camRot)*Math.min(1,2.2*dt);
 
   // Anzeige
   if(racing||G.state==='count'){
@@ -927,16 +976,16 @@ function burstConfetti(){
 }
 
 function showResult(){
-  const st=standings(), place=st.indexOf(G.player)+1;
+  const st=standings(), mine=st.find(x=>x.byPlayer)||G.player, place=st.indexOf(mine)+1;
   const titles={1:'Erster! Du hast gewonnen!',2:'Zweiter Platz. Super gefahren!',3:'Dritter Platz. Toll gemacht!'};
   $('#res-place').textContent=place+'. Platz';
   $('#res-title').textContent=titles[place]||'Angekommen! Gleich nochmal?';
   const list=$('#res-list'); list.textContent='';
   const medals=['#ffc928','#cfd8dc','#d89a5b','#a9c3d1'];
-  st.forEach((s,i)=>{ const li=document.createElement('li'); if(s.isPlayer) li.className='me';
+  st.forEach((s,i)=>{ const li=document.createElement('li'); if(s.byPlayer) li.className='me';
     const m=document.createElement('span'); m.className='medal'; m.style.background=medals[Math.min(i,3)]; m.textContent=i+1;
     const nm=document.createElement('span'); nm.className='nm'; nm.textContent=s.cfg.name;
-    const sm=document.createElement('small'); sm.textContent=s.isPlayer?'Das bist du':'Karte '+s.cfg.code; nm.appendChild(sm);
+    const sm=document.createElement('small'); sm.textContent=s.byPlayer?'Von dir gesteuert':'Karte '+s.cfg.code; nm.appendChild(sm);
     li.append(m, sideCanvas(s.cfg,110), nm); list.appendChild(li); });
   $('#result').hidden=false; $('#again').focus({preventScroll:true});
 }
@@ -1107,11 +1156,15 @@ function drawLine(p,kind){
 }
 
 function render(){
-  const c=ctx, th=THEMES[G.theme], t=G.t, s=SC, anchor=ch*.7;
+  const c=ctx, th=THEMES[G.theme], t=G.t, cam=CAMS[G.cam], s=SC*cam.zoom, anchor=cam.tilt?ch-SH*.3:ch*cam.anchor;
   c.setTransform(dpr,0,0,dpr,0,0);
   c.fillStyle=th.land; c.fillRect(0,0,cw,ch);
-  c.setTransform(dpr*s,0,0,dpr*s,dpr*(cw/2-G.camX*s),dpr*(anchor+G.camP*s));
-  const pA=G.camP-(ch-anchor)/s-120, pB=G.camP+anchor/s+120, xA=G.camX-cw/2/s-120, xB=G.camX+cw/2/s+120;
+  const view=new DOMMatrix().scaleSelf(dpr,dpr).translateSelf(cw/2,anchor).rotateSelf(cam.rotate?-G.camRot*180/Math.PI:0).scaleSelf(s,s).translateSelf(-G.camX,G.camP);
+  c.setTransform(view); G.view=view; G.viewInv=view.inverse();
+  // sichtbarer Ausschnitt der Spielwelt
+  let pA=1e9, pB=-1e9, xA=1e9, xB=-1e9;
+  for(const [qx,qy] of [[0,0],[cw,0],[0,ch],[cw,ch]]){ const w=G.viewInv.transformPoint({x:qx*dpr,y:qy*dpr}); pA=Math.min(pA,-w.y); pB=Math.max(pB,-w.y); xA=Math.min(xA,w.x); xB=Math.max(xB,w.x); }
+  pA-=120; pB+=120; xA-=120; xB+=120;
   // Land-Flecken
   const cell=150;
   for(let j=Math.floor(pA/cell);j<=Math.ceil(pB/cell);j++) for(let i=Math.floor(xA/cell);i<=Math.ceil(xB/cell);i++){
@@ -1159,17 +1212,19 @@ function render(){
   // Bildschirm-Ebene: Pfeil über dem eigenen Schiff
   c.setTransform(dpr,0,0,dpr,0,0);
   const pl=G.player, SL=pl?pl.L:0;
-  if(pl){ const sx=(pl.x+Math.sin(pl.hd)*SL*.55-G.camX)*s+cw/2, sy=anchor-(pl.p+Math.cos(pl.hd)*SL*.55-G.camP)*s-14-Math.sin(t*5)*4;
+  if(pl){ const sp=G.view.transformPoint({x:pl.x+Math.sin(pl.hd)*SL*.55, y:-(pl.p+Math.cos(pl.hd)*SL*.55)}), k=cam.tilt?1.6:1;
+    const sx=sp.x/dpr, sy=sp.y/dpr-14*k-Math.sin(t*5)*4*k;
+    c.save(); c.translate(sx,sy); c.scale(k,k); c.translate(-sx,-sy);
     c.fillStyle='#ffc928'; c.strokeStyle='#3a2a00'; c.lineWidth=2.5;
     c.beginPath(); c.moveTo(sx,sy); c.lineTo(sx-13,sy-16); c.lineTo(sx-6,sy-16); c.lineTo(sx-6,sy-38); c.lineTo(sx+6,sy-38); c.lineTo(sx+6,sy-16); c.lineTo(sx+13,sy-16); c.closePath(); c.fill(); c.stroke();
-    c.font='20px "Lilita One", sans-serif'; c.textAlign='center'; c.lineWidth=4; c.strokeText('DU',sx,sy-44); c.fillText('DU',sx,sy-44); }
+    c.font='20px "Lilita One", sans-serif'; c.textAlign='center'; c.lineWidth=4; c.strokeText('DU',sx,sy-44); c.fillText('DU',sx,sy-44); c.restore(); }
   for(const q of G.confetti){ c.save(); c.translate(q.x,q.y); c.rotate(q.a); c.fillStyle=q.c; c.fillRect(-q.w/2,-q.h/2,q.w,q.h); c.restore(); }
 }
 
 let last=performance.now();
 function frame(now){
   const dt=Math.min(.05,(now-last)/1000); last=now;
-  if(G.state!=='menu'){ update(dt); render(); }
+  if(G.state!=='menu'){ const n=G.fast?4:1; for(let i=0;i<n;i++) update(dt); render(); }
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
@@ -1200,6 +1255,8 @@ $('#go').addEventListener('click',startRace);
 $('#again').addEventListener('click',startRace);
 $('#back').addEventListener('click',showMenu);
 $('#home').addEventListener('click',showMenu);
+$('#camb').addEventListener('click',()=>setCam(G.cam+1,true));
+$('#fast').addEventListener('click',()=>{ G.fast=!G.fast; $('#fast').textContent=G.fast?'▶ Normal':'⏩ Vorspulen'; });
 $('#mute').addEventListener('click',()=>{ Sound.init(); Sound.setMuted(!Sound.muted); $('#mute').textContent=Sound.muted?'🔇':'🔊'; $('#mute').setAttribute('aria-label',Sound.muted?'Ton an':'Ton aus'); });
 
 function bindPad(el,side){
@@ -1213,13 +1270,14 @@ bindPad($('#pad-l'),'l'); bindPad($('#pad-r'),'r');
 $('#pad-t').addEventListener('pointerdown',e=>{ e.preventDefault(); useTurbo(G.player); });
 cv.addEventListener('pointerdown',e=>{
   if(G.state==='menu') return;
-  const r=cv.getBoundingClientRect(), wx=(e.clientX-r.left-cw/2)/SC+G.camX, wp=G.camP-(e.clientY-r.top-ch*.7)/SC;
+  if(!G.viewInv) return;
+  const r=$('#game').getBoundingClientRect(), q=screenToCanvas(e.clientX-r.left,e.clientY-r.top), w=G.viewInv.transformPoint({x:q.x*dpr,y:q.y*dpr}), wx=w.x, wp=-w.y, zs=SC*CAMS[G.cam].zoom;
   let best=null, bd=1e9;
   for(const s of G.ships){
     // Abstand zum Schiff als Strecke von Heck bis Bug
     const sn=Math.sin(s.hd), cs=Math.cos(s.hd), dx=wx-s.x, dp=wp-s.p, along=clamp(dx*sn+dp*cs,-s.L/2,s.L/2);
     const d=Math.hypot(dx-sn*along, dp-cs*along);
-    if(d<Math.max(s.B*1.6,34/SC) && d<bd){ best=s; bd=d; }
+    if(d<Math.max(s.B*1.6,(TILT?60:34)/zs) && d<bd){ best=s; bd=d; }
   }
   if(best) switchTo(best);
 });
@@ -1230,6 +1288,7 @@ addEventListener('keydown',e=>{
   const k=e.key;
   if(k==='ArrowLeft'||k==='a'||k==='A'){ G.keys.l=true; e.preventDefault(); }
   else if(k==='ArrowRight'||k==='d'||k==='D'){ G.keys.r=true; e.preventDefault(); }
+  else if(k==='c'||k==='C'||k==='k'||k==='K'){ setCam(G.cam+1,true); }
   else if(k==='ArrowUp'||k==='w'||k==='W'){ useTurbo(G.player); e.preventDefault(); }
   else if(k===' '||k==='h'||k==='H'){ if(!$('#result').hidden) return; honk(); e.preventDefault(); }
 });

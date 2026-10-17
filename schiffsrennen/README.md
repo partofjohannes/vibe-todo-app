@@ -21,6 +21,8 @@ Ein Rennspiel mit echten Kreuzfahrtschiffen, gemacht für Emil (6).
 - Hupen: Leertaste oder „Tuuut!“-Knopf. Segelboote und Kutter fahren dann schnell zur Seite.
 - Turbo: 3 goldene Sterne sammeln, dann mit Pfeil nach oben (oder W, oder Turbo-Knopf) zünden. Man kann bis zu 3 Turbos aufsparen.
 - Schiff wechseln: Im Rennen auf ein anderes Schiff tippen oder klicken (oder auf seinen Punkt in der Leiste oben). Dann steuert man dieses Schiff.
+- Kamera wechseln: Kamera-Knopf oben oder Taste C. Es gibt „Von oben“, „Ganz nah“, „Überblick“, „Mitfahren“ (die Strecke dreht sich mit) und „Hinter dem Schiff“ (schräge 3D-Sicht).
+- Das Rennen endet erst, wenn alle Schiffe im Ziel sind. Bis dahin kann man zuschauen, ein Schiff übernehmen, das noch fährt, oder vorspulen.
 - Wer gegen Bojen, Felsen, Eisschollen oder Sandbänke fährt, wird langsamer. Kaputt geht nichts.
 
 Die Schiffswerte auf den Karten sind ungefähre Angaben.
