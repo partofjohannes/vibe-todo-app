@@ -70,6 +70,7 @@ h1{font-family:var(--f-display);font-weight:400;font-size:clamp(2.4rem,7vw,4.6re
 .speed{flex:0 1 200px;border:4px solid transparent;border-radius:14px;background:var(--sea-2);padding:12px 16px;text-align:left;display:flex;align-items:center;gap:12px;box-shadow:0 5px 0 rgba(0,0,0,.28)}
 .speed[aria-pressed="true"]{border-color:var(--signal)}
 .speed .ico{font-size:34px;line-height:1}
+.speed .num-ico{font-family:var(--f-display);color:var(--signal);width:34px;text-align:center}
 .speed b{font-family:var(--f-display);font-weight:400;font-size:21px;display:block}
 .speed small{font-size:13px;font-weight:700;color:#bcd3df}
 
@@ -91,6 +92,7 @@ kbd{font-family:var(--f-data);font-weight:600;background:rgba(255,255,255,.12);b
 .bar{flex:1;min-width:0;height:18px;border-radius:9px;background:rgba(8,40,60,.55);position:relative;
   background-image:linear-gradient(90deg,transparent calc(100% - 14px),rgba(255,255,255,.9) calc(100% - 14px));}
 .bar .dot{position:absolute;top:50%;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;border:2px solid rgba(0,0,0,.35);box-sizing:border-box}
+.bar .port{position:absolute;top:50%;width:6px;height:24px;margin:-12px 0 0 -3px;background:var(--signal);border-radius:3px;opacity:.9}
 .bar .dot.me{width:26px;height:26px;margin:-13px 0 0 -13px;border:3px solid var(--signal);z-index:2}
 .place{flex:none;min-width:64px;height:46px;border-radius:23px;background:var(--signal);color:var(--signal-ink);font-family:var(--f-display);font-size:28px;display:grid;place-items:center;padding:0 10px;box-sizing:border-box}
 .count{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;font-family:var(--f-display);font-size:min(34vw,220px);color:#fff;
@@ -119,10 +121,10 @@ kbd{font-family:var(--f-data);font-weight:600;background:rgba(255,255,255,.12);b
 @media (max-width:520px){.starmeter{padding:0 7px}.starmeter i{width:16px;height:16px}.place{min-width:52px;font-size:24px}.round{width:40px;height:40px}}
 
 /* ---------- Ergebnis ---------- */
-#result{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,30,46,.55);
+#result{position:absolute;inset:0;display:flex;background:rgba(6,30,46,.55);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px;box-sizing:border-box;overflow:auto}
 .res-box{background:var(--card);color:var(--ink);border-radius:20px;padding:22px 22px 24px;width:100%;max-width:520px;box-sizing:border-box;
-  display:flex;flex-direction:column;gap:14px;box-shadow:0 10px 0 rgba(0,0,0,.3);animation:rise .45s ease-out both}
+  display:flex;flex-direction:column;gap:14px;margin:auto;box-shadow:0 10px 0 rgba(0,0,0,.3);animation:rise .45s ease-out both}
 @keyframes rise{from{transform:translateY(40px) scale(.95);opacity:0}to{transform:none;opacity:1}}
 .res-place{font-family:var(--f-display);font-size:64px;line-height:.9;margin:0;color:var(--flag)}
 .res-title{font-family:var(--f-display);font-weight:400;font-size:28px;line-height:1.05;margin:0;text-wrap:balance}
@@ -147,7 +149,7 @@ kbd{font-family:var(--f-data);font-weight:600;background:rgba(255,255,255,.12);b
     <header class="masthead">
       <p class="eyebrow">Großes Kreuzfahrt-Quartett · Rennen</p>
       <h1>Emils Schiffsrennen</h1>
-      <p class="lede">Such dir ein Kreuzfahrtschiff aus und fahr gegen drei andere um die Wette. Achtung, Kurven! Und weich den Bojen, Felsen und Segelbooten aus.</p>
+      <p class="lede">Such dir ein Kreuzfahrtschiff aus und fahr gegen die anderen um die Wette. Achtung, enge Kurven! Weich den Bojen, Felsen und Segelbooten aus, und halte in jedem Hafen kurz an.</p>
     </header>
 
     <section class="step" aria-labelledby="h-ship">
@@ -174,8 +176,17 @@ kbd{font-family:var(--f-data);font-weight:600;background:rgba(255,255,255,.12);b
       </div>
     </section>
 
+    <section class="step" aria-labelledby="h-count">
+      <h2 id="h-count"><span class="num">4</span>Wie viele Schiffe?</h2>
+      <div class="choices" id="counts">
+        <button class="speed" data-count="4" aria-pressed="false"><span class="ico num-ico">4</span><span><b>Vier</b><small>übersichtlich</small></span></button>
+        <button class="speed" data-count="6" aria-pressed="true"><span class="ico num-ico">6</span><span><b>Sechs</b><small>mehr los</small></span></button>
+        <button class="speed" data-count="8" aria-pressed="false"><span class="ico num-ico">8</span><span><b>Acht</b><small>volles Wasser</small></span></button>
+      </div>
+    </section>
+
     <section class="step" aria-labelledby="h-foe">
-      <h2 id="h-foe"><span class="num">4</span>Gegner</h2>
+      <h2 id="h-foe"><span class="num">5</span>Gegner</h2>
       <div class="choices" id="speeds">
         <button class="speed" data-speed="easy" aria-pressed="true"><span class="ico" aria-hidden="true">🐢</span><span><b>Gemütlich</b><small>mit Lenkhilfe</small></span></button>
         <button class="speed" data-speed="hard" aria-pressed="false"><span class="ico" aria-hidden="true">🐇</span><span><b>Flott</b><small>für Profis</small></span></button>
@@ -184,7 +195,7 @@ kbd{font-family:var(--f-data);font-weight:600;background:rgba(255,255,255,.12);b
 
     <div class="go-row">
       <button id="go">Leinen los!</button>
-      <p class="hint">Lenken mit <kbd>◀</kbd> <kbd>▶</kbd> oder den großen Knöpfen.<br>3 goldene Sterne sammeln, dann Turbo mit <kbd>▲</kbd>.<br>Hupen mit der <kbd>Leertaste</kbd>. Segelboote machen dann Platz.<br>Tipp im Rennen auf ein anderes Schiff, dann steuerst du das.</p>
+      <p class="hint">In jedem Hafen halten alle Schiffe kurz an, bis der gelbe Kreis voll ist.<br>Lenken mit <kbd>◀</kbd> <kbd>▶</kbd> oder den großen Knöpfen.<br>3 goldene Sterne sammeln, dann Turbo mit <kbd>▲</kbd>.<br>Hupen mit der <kbd>Leertaste</kbd>. Segelboote machen dann Platz.<br>Tipp im Rennen auf ein anderes Schiff, dann steuerst du das.</p>
     </div>
   </div>
 </main>
@@ -511,19 +522,53 @@ function drawTop(c,s,L,B,t){
    ========================================================= */
 const P0=-1500, STEP=20; let P1=LEN+3000;
 let TX=null, TW=null;
+const PORTNAMES = {
+  karibik:['Nassau','Cozumel','Barbados','Aruba','St. Maarten'],
+  nordsee:['Helgoland','Sylt','Hamburg','Bremerhaven','Kiel'],
+  fjord:['Geiranger','Bergen','Ålesund','Flåm','Tromsø'],
+};
+const STOPTIME = 3;   // Sekunden Halt im Hafen
+let PORTS = [];
 function buildTrack(){
   P1=LEN+3000;
-  const SP=850, n=Math.ceil((P1-P0)/STEP)+2, nc=Math.ceil((P1-P0)/SP)+3;
-  const ctrl=[]; let x=0;
-  for(let k=0;k<nc;k++){ const p=P0+k*SP; if(p>800 && p<LEN-1400) x+=rand(-330,330); ctrl.push(x); }
+  const n=Math.ceil((P1-P0)/STEP)+2;
+  // Häfen für die Zwischenstopps
+  const nPorts=LEN<=20000?1:LEN<=40000?2:3, names=PORTNAMES[G.theme].slice().sort(()=>Math.random()-.5);
+  PORTS=[]; for(let i=0;i<nPorts;i++) PORTS.push({p:Math.round(LEN*(i+1)/(nPorts+1)), side:Math.random()<.5?-1:1, name:names[i]});
+  const nearPort=(p,r)=>PORTS.some(q=>Math.abs(q.p-p)<r);
+  // Kurven: Kontrollpunkte mit wechselndem Abstand und Ausschlag
+  const cp=[], cx=[]; let p=P0, x=0, lastSign=1;
+  while(p<P1+4000){
+    cp.push(p); cx.push(x);
+    let sp, dx; const r=Math.random();
+    if(p<900 || p>LEN-1500){ sp=900; dx=0; }
+    else if(r<.25){ sp=rand(430,620); dx=rand(170,280); }        // enge Kurve
+    else if(r<.58){ sp=rand(800,1100); dx=rand(200,460); }       // mittlere Kurve
+    else if(r<.85){ sp=rand(1300,1900); dx=rand(420,820); }      // große, weite Kurve
+    else { sp=rand(700,1300); dx=rand(0,50); }                   // gerades Stück
+    if(nearPort(p+sp/2, sp/2+650)){ sp=Math.max(sp,1100); dx=Math.min(dx,90); }
+    const sg=Math.random()<.7?-lastSign:lastSign; lastSign=sg;   // meist S-Kurven
+    p+=sp; x+=dx*sg;
+  }
+  // Breite: schmale Stellen, normale Stellen und weite Buchten
+  const startW=470+(G.count-4)*22;
+  const wp=[], wv=[]; p=P0;
+  while(p<P1+4000){ wp.push(p); const r=Math.random();
+    wv.push(p<1400?startW : r<.22?rand(340,400) : r<.62?rand(440,540) : rand(640,920)); p+=rand(900,1800); }
   TX=new Float32Array(n); TW=new Float32Array(n);
-  const ph=rand(0,6);
+  const ph=rand(0,6); let k=0, kw=0;
   for(let i=0;i<n;i++){
-    const p=P0+i*STEP, u=(p-P0)/SP, k=Math.floor(u), f=u-k, sm=(1-Math.cos(Math.PI*f))/2;
-    TX[i]=ctrl[k]+(ctrl[k+1]-ctrl[k])*sm;
-    let w=440+60*Math.sin(p/1150+ph)+25*Math.sin(p/380+ph*2);
-    if(p<700) w=480; else if(p<1100) w=480+(w-480)*(p-700)/400;
-    TW[i]=w;
+    const p=P0+i*STEP;
+    while(cp[k+1]<=p) k++;
+    const f=(p-cp[k])/(cp[k+1]-cp[k]), sm=(1-Math.cos(Math.PI*f))/2;
+    let xx=cx[k]+(cx[k+1]-cx[k])*sm;
+    while(wp[kw+1]<=p) kw++;
+    const g=(p-wp[kw])/(wp[kw+1]-wp[kw]), gs=(1-Math.cos(Math.PI*g))/2;
+    let w=wv[kw]+(wv[kw+1]-wv[kw])*gs+18*Math.sin(p/380+ph);
+    if(p<1000) w=startW;
+    // Hafenbecken: das Ufer auf der Hafenseite weicht zurück
+    for(const q of PORTS){ const d=Math.abs(p-q.p); if(d<750){ const k=.5+.5*Math.cos(Math.PI*d/750); w=w+(Math.min(w,540)-w)*k+260*k; xx+=q.side*130*k; } }
+    TX[i]=xx; TW[i]=Math.max(330,w);
   }
 }
 function tx(p){ let u=(p-P0)/STEP; if(u<0) u=0; if(u>TX.length-2) u=TX.length-2; const i=u|0, f=u-i; return TX[i]+(TX[i+1]-TX[i])*f; }
@@ -548,8 +593,12 @@ function makeObstacle(type,x,p,id){
 function buildCourse(theme){
   const th=THEMES[theme]; const obs=[], stars=[], decor=[];
   let id=1, p=1350;
+  const nearPort=(p,r)=>PORTS.some(q=>Math.abs(q.p-p)<r);
   while(p<LEN-450){
+    if(nearPort(p,700)){ p+=200; continue; }
     const c=tx(p), w=tw(p), r=Math.random();
+    if(w>620 && Math.random()<.6){ // weite Bucht: ein paar Hindernisse mehr
+      const t=pick(th.small); const x3=c+rand(-(w/2-50),w/2-50); obs.push(makeObstacle(t,x3,p+rand(120,200),id++)); }
     if(r<.14 && w>450){ obs.push(makeObstacle(th.big, c+rand(-25,25), p, id++)); }
     else if(r<.30){ // Fahrwassertonnen: rot links, grün rechts, dazwischen die Lücke
       const gc=c+rand(-w/2+95,w/2-95); const a=makeObstacle('buoy',gc-78,p,id++), b=makeObstacle('buoy',gc+78,p,id++); a.col='#d8302b'; b.col='#1f9a4a'; obs.push(a,b);
@@ -563,11 +612,13 @@ function buildCourse(theme){
   // Sternenreihen
   for(let q=1500; q<LEN-600; q+=rand(650,1000)){
     const off=rand(-.3,.3);
+    if(nearPort(q,700)) continue;
     for(let k=0;k<3;k++){ const pp=q+k*70; stars.push({x:tx(pp)+off*tw(pp),p:pp,taken:false}); }
   }
   // Landschaft
   for(const side of [-1,1]){
     for(let q=P0; q<P1; q+=rand(55,130)){
+      if(PORTS.some(pt=>pt.side===side && Math.abs(pt.p-q)<480)) continue;
       const type=weighted(th.decor);
       let off = type==='hut'||type==='umbrella'||type==='house'||type==='cabin' ? rand(44,120) : rand(40,460);
       if(type==='lighthouse') off=rand(40,70);
@@ -607,6 +658,7 @@ const Sound={
     s.buffer=this.noise(1.2); f.type='bandpass'; f.Q.value=1.5; f.frequency.setValueAtTime(300,t); f.frequency.exponentialRampToValueAtTime(2400,t+.9);
     g.gain.setValueAtTime(.001,t); g.gain.exponentialRampToValueAtTime(.5,t+.2); g.gain.exponentialRampToValueAtTime(.001,t+1.1);
     s.connect(f); f.connect(g); g.connect(this.master); s.start(t); this.tone(220,.9,'sawtooth',.06,0,660); },
+  dingdong(){ this.tone(784,.6,'sine',.22); this.tone(622,.8,'sine',.22,.35); },
   fanfare(){ [523,659,784,1046,784,1046].forEach((f,i)=>this.tone(f,i>=4?.5:.2,'triangle',.2,i*.15)); },
   seaStart(){ const c=this.ctx; if(!c||this.seaNode) return; const s=c.createBufferSource(), f=c.createBiquadFilter(), g=c.createGain(), l=c.createOscillator(), lg=c.createGain();
     s.buffer=this.noise(3); s.loop=true; f.type='lowpass'; f.frequency.value=420; g.gain.value=.05; l.frequency.value=.15; lg.gain.value=.03;
@@ -618,7 +670,7 @@ const Sound={
    Spielzustand
    ========================================================= */
 const G={ state:'menu', ships:[], obs:[], stars:[], decor:[], parts:[], confetti:[], t:0, cd:0, camP:0, camX:0,
-  keys:{l:false,r:false}, pads:{l:new Set(),r:new Set()}, player:null, theme:'karibik', speed:'easy', len:'mittel', hudKey:'', toastT:0, choice:0, endT:0, lastCount:0, hornCd:0 };
+  keys:{l:false,r:false}, pads:{l:new Set(),r:new Set()}, player:null, theme:'karibik', speed:'easy', len:'mittel', count:6, hudKey:'', toastT:0, choice:0, endT:0, lastCount:0, hornCd:0 };
 const cv=$('#cv'), ctx=cv.getContext('2d');
 let cw=0, ch=0, dpr=1, SC=1;
 
@@ -636,13 +688,15 @@ function startRace(){
   const course=buildCourse(G.theme);
   G.obs=course.obs; G.stars=course.stars; G.decor=course.decor; G.parts=[]; G.confetti=[];
   const me=SHIPS[G.choice];
-  const others=SHIPS.filter(s=>s!==me).sort(()=>Math.random()-.5).slice(0,3);
+  const N=G.count;
+  const others=SHIPS.filter(s=>s!==me).sort(()=>Math.random()-.5).slice(0,N-1);
   const lanes=[-.33,-.11,.11,.33], myLane=Math.random()<.5?1:2;
   const easy=G.speed==='easy';
   const order=[]; let oi=0;
-  for(let i=0;i<4;i++) order.push(i===myLane?me:others[oi++]);
-  G.ships=order.map((cfg,i)=>{ const L=clamp(SL*Math.sqrt(cfg.stats.laenge/340),92,166); return { cfg, idx:i, isPlayer:cfg===me, x:tx(0)+lanes[i]*tw(0), p:-40, v:0, vx:0, hd:0, lane:lanes[i]*.85,
-    L, B:L*.165, em:0, boost:0, hit:0, done:false, ft:0, avoid:0, avoidSide:1, stars:0, turbo:0,
+  for(let i=0;i<N;i++) order.push(i===myLane?me:others[oi++]);
+  G.ships=order.map((cfg,i)=>{ const L=clamp(SL*Math.sqrt(cfg.stats.laenge/340),92,166), ln=lanes[i%4], p0=-40-Math.floor(i/4)*180;
+    return { cfg, idx:i, isPlayer:cfg===me, x:tx(p0)+ln*tw(p0), p:p0, v:0, vx:0, hd:0, lane:ln*.85,
+    L, B:L*.165, em:0, boost:0, hit:0, done:false, ft:0, avoid:0, avoidSide:1, stars:0, turbo:0, nextPort:0, stopT:0,
     skill:(easy?.72:.9)+rand(-.04,.04), base:(easy?.86:.97)+rand(-.025,.025) }; });
   G.player=G.ships[myLane];
   for(const o of G.obs) for(const s of G.ships) o.seen[s.idx]=hash(o.id,s.idx+11)<s.skill;
@@ -652,6 +706,7 @@ function startRace(){
   const bar=$('#bar'); bar.textContent='';
   for(const s of G.ships){ const d=document.createElement('button'); d.className='dot'+(s.isPlayer?' me':''); d.style.background=s.cfg.mark;
     d.setAttribute('aria-label',s.cfg.name+' steuern'); d.addEventListener('pointerdown',e=>{ e.preventDefault(); switchTo(s); }); bar.appendChild(d); s.dot=d; }
+  for(const q of PORTS){ const m=document.createElement('span'); m.className='port'; m.style.left=(q.p/LEN*100)+'%'; bar.insertBefore(m,bar.firstChild); }
   G.hudKey='';
   $('#menu').hidden=true; $('#game').hidden=false; $('#result').hidden=true; $('#toast').hidden=true;
   resize(); Sound.seaStart();
@@ -687,6 +742,9 @@ function aiTarget(s){
     s.avoid=best.id; s.avoidSide=side;
     target=best.x+side*(best.r+SB*.5+32);
   }
+  // vor dem Hafen: zum Kai fahren und dort anlegen
+  const port=PORTS[s.nextPort];
+  if(port && port.p-s.p<1100) target=quayX(port,SB);
   for(const o of G.ships){ if(o===s) continue; const d=o.p-s.p; if(d>0 && d<SL*1.4 && Math.abs(o.x-s.x)<SB*1.7){ target+=(s.x>=o.x?1:-1)*SB*1.4; break; } }
   const pm=s.p+look*.5, lim=tw(pm)/2-SB*.5-18;
   return clamp(target, tx(pm)-lim, tx(pm)+lim);
@@ -718,7 +776,7 @@ function update(dt){
         const assist=easy?.75:.35;
         vxT=u*LATMAX+slope*s.v*(u===0?assist:assist*.6);
         // in der leichten Stufe sanft zurück in die Mitte, wenn man gar nicht lenkt
-        if(u===0 && easy){ vxT+=(tx(s.p+120)-s.x)*.12; }
+        if(u===0 && easy){ const pt=PORTS[s.nextPort]; vxT+=((pt && pt.p-s.p<1100 ? quayX(pt,SB) : tx(s.p+120))-s.x)*.12; }
       } else {
         const gap=s.p-G.player.p;
         let f=s.base;
@@ -727,6 +785,15 @@ function update(dt){
         const target=aiTarget(s);
         vxT=clamp((target-s.x)*2.2+slope*s.v,-LATMAX,LATMAX);
         if(s.turbo>0 && s.boost<=0 && G.state==='race' && Math.random()<dt*.2) useTurbo(s);
+      }
+      // Zwischenstopp im Hafen
+      const port=PORTS[s.nextPort];
+      if(port && !s.done){
+        const d=port.p-s.p;
+        if(s.stopT>0){ vT=0; s.v*=1-Math.min(1,2.5*dt); s.stopT-=dt;
+          if(s.stopT<=0){ s.stopT=0; s.nextPort++; if(s.isPlayer){ Sound.horn(1,.28); showToast('Weiter geht’s!',1400); } } }
+        else if(d<=0){ s.stopT=STOPTIME; if(s.isPlayer){ Sound.dingdong(); showToast('Hafen '+port.name+': Passagiere steigen ein!',2600); } }
+        else if(d<320) vT=Math.min(vT,35+d*.75);
       }
       if(s.p>LEN) vT=Math.min(vT,95);
     }
@@ -830,7 +897,7 @@ function honk(){
 }
 
 function useTurbo(s){
-  if(G.state!=='race'||s.done||s.turbo<=0||s.boost>0) return;
+  if(G.state!=='race'||s.done||s.turbo<=0||s.boost>0||s.stopT>0) return;
   s.turbo--; s.boost=2.8;
   if(s.isPlayer){ Sound.whoosh(); for(let k=0;k<2;k++) addPart('ring',s.x,s.p-s.L*.45,0,0,.6,8+k*12,90); }
 }
@@ -842,9 +909,9 @@ function switchTo(s){
   s.isPlayer=true; G.player=s; s.dot.classList.add('me');
   Sound.horn(.85+s.idx*.08,.25);
   for(let k=0;k<3;k++) addPart('ring',s.x,s.p,0,0,.8,12+k*16,130);
-  const tt=$('#toast'); tt.textContent='Jetzt fährst du die '+s.cfg.name+'!'; tt.hidden=false;
-  clearTimeout(G.toastT); G.toastT=setTimeout(()=>{ tt.hidden=true; },2200);
+  showToast('Jetzt fährst du die '+s.cfg.name+'!',2200);
 }
+function showToast(text,ms){ const tt=$('#toast'); tt.textContent=text; tt.hidden=false; clearTimeout(G.toastT); G.toastT=setTimeout(()=>{ tt.hidden=true; },ms); }
 
 function updateTurboHud(){
   const pl=G.player, key=pl.stars+'/'+pl.turbo+'/'+(pl.boost>0?1:0);
@@ -861,13 +928,13 @@ function burstConfetti(){
 
 function showResult(){
   const st=standings(), place=st.indexOf(G.player)+1;
-  const titles={1:'Erster! Du hast gewonnen!',2:'Zweiter Platz. Super gefahren!',3:'Dritter Platz. Toll gemacht!',4:'Vierter Platz. Gleich nochmal?'};
+  const titles={1:'Erster! Du hast gewonnen!',2:'Zweiter Platz. Super gefahren!',3:'Dritter Platz. Toll gemacht!'};
   $('#res-place').textContent=place+'. Platz';
-  $('#res-title').textContent=titles[place];
+  $('#res-title').textContent=titles[place]||'Angekommen! Gleich nochmal?';
   const list=$('#res-list'); list.textContent='';
   const medals=['#ffc928','#cfd8dc','#d89a5b','#a9c3d1'];
   st.forEach((s,i)=>{ const li=document.createElement('li'); if(s.isPlayer) li.className='me';
-    const m=document.createElement('span'); m.className='medal'; m.style.background=medals[i]; m.textContent=i+1;
+    const m=document.createElement('span'); m.className='medal'; m.style.background=medals[Math.min(i,3)]; m.textContent=i+1;
     const nm=document.createElement('span'); nm.className='nm'; nm.textContent=s.cfg.name;
     const sm=document.createElement('small'); sm.textContent=s.isPlayer?'Das bist du':'Karte '+s.cfg.code; nm.appendChild(sm);
     li.append(m, sideCanvas(s.cfg,110), nm); list.appendChild(li); });
@@ -984,6 +1051,41 @@ function drawObstacle(o,t,th){
   c.restore();
 }
 
+function quayX(q,B){ return tx(q.p)+q.side*(tw(q.p)/2-B*.5-26); }
+function drawPort(q,t){
+  const c=ctx, sd=q.side, a=q.p-320, b=q.p+320, edge=p=>tx(p)+sd*(tw(p)/2-2);
+  // Kaimauer
+  c.beginPath(); for(let p=a;p<=b;p+=20) c.lineTo(edge(p),-p); for(let p=b;p>=a;p-=20) c.lineTo(edge(p)+sd*96,-p); c.closePath();
+  c.fillStyle='#bfc3c2'; c.fill();
+  c.beginPath(); for(let p=a;p<=b;p+=20) c.lineTo(edge(p),-p); c.strokeStyle='#6f7576'; c.lineWidth=5; c.stroke();
+  c.fillStyle='#2f3437'; for(let p=a+25;p<b;p+=48){ c.beginPath(); c.arc(edge(p)+sd*7,-p,3.2,0,7); c.fill(); }
+  // Terminal
+  const rot=Math.atan2(tx(q.p+30)-tx(q.p-30),60), bx=edge(q.p)+sd*(96+62);
+  c.save(); c.translate(bx,-q.p); c.rotate(rot);
+  c.fillStyle='rgba(0,0,0,.18)'; c.fillRect(-52+8,-170+10,104,340);
+  c.fillStyle='#f3f5f6'; c.fillRect(-52,-170,104,340);
+  c.fillStyle='#2d6fa8'; for(let y=-160;y<170;y+=34) c.fillRect(-52,y,104,6);
+  c.fillStyle='#9fd0ea'; c.fillRect(sd>0?-52:44,-170,8,340);
+  // Parkplatz mit Bussen
+  c.fillStyle='#8b9192'; c.fillRect(sd*60+(sd>0?0:-80),-140,80,280);
+  const bus=['#e8413a','#ffc928','#2b78d6','#ffffff']; for(let k=0;k<5;k++){ c.fillStyle=bus[k%4]; c.fillRect(sd*60+(sd>0?14:-66),-125+k*55,52,16); }
+  c.restore();
+  // Passagiere
+  const cols=['#e8413a','#2b78d6','#ffc928','#22a37a','#ffffff','#ff7ad9'];
+  for(let k=0;k<26;k++){ const pp=a+40+hash(k,q.p)*(b-a-80)+Math.sin(t*.8+k)*12, off=16+hash(q.p,k)*62;
+    c.fillStyle=cols[k%6]; c.beginPath(); c.arc(edge(pp)+sd*off,-pp,4,0,7); c.fill(); }
+  // Fahnen
+  for(let k=0;k<4;k++){ const pp=a+60+k*170, fx=edge(pp)+sd*86; c.fillStyle='#555'; c.fillRect(fx-1,-pp-1,3,3);
+    c.fillStyle=cols[k]; c.beginPath(); c.moveTo(fx,-pp); c.lineTo(fx+12+Math.sin(t*4+k)*2,-pp-4); c.lineTo(fx,-pp-9); c.closePath(); c.fill(); }
+  // Haltelinie quer über das Wasser
+  const lx=tx(q.p), lw=tw(q.p);
+  c.save(); c.strokeStyle='#ffc928'; c.lineWidth=7; c.setLineDash([26,16]); c.beginPath(); c.moveTo(lx-lw/2,-q.p); c.lineTo(lx+lw/2,-q.p); c.stroke(); c.restore();
+  for(const e of [-1,1]){ c.fillStyle='#ffc928'; c.beginPath(); c.arc(lx+e*(lw/2-16),-q.p,12,0,7); c.fill(); c.strokeStyle='#3a2a00'; c.lineWidth=2; c.stroke(); }
+  const nx=edge(q.p+260)-sd*150;
+  c.save(); c.textAlign='center'; c.font='40px "Lilita One", sans-serif'; c.lineWidth=6; c.strokeStyle='rgba(0,40,60,.55)'; c.fillStyle='#ffc928';
+  c.strokeText('⚓ '+q.name,nx,-q.p-260); c.fillText('⚓ '+q.name,nx,-q.p-260); c.restore();
+}
+
 function drawStar(st,t){
   const c=ctx; c.save(); c.translate(st.x,-st.p); c.rotate(t*1.5+st.p);
   const pulse=1+Math.sin(t*5+st.p)*.08; c.scale(pulse,pulse);
@@ -1030,6 +1132,7 @@ function render(){
   // Landschaft
   for(const d of G.decor){ if(d.p<pA-60) continue; if(d.p>pB+60) break; drawDecor(d,t,th); }
   drawLine(0,'start'); drawLine(LEN,'finish');
+  for(const q of PORTS) if(q.p>pA-900 && q.p<pB+900) drawPort(q,t);
   // Kielwasser
   for(const q of G.parts){ if(q.kind!=='foam') continue; const a=q.life/q.max; c.fillStyle='rgba(255,255,255,'+(a*.42).toFixed(3)+')'; c.beginPath(); c.arc(q.x,-q.p,q.r,0,7); c.fill(); }
   for(const st of G.stars) if(!st.taken && st.p>pA && st.p<pB) drawStar(st,t);
@@ -1046,6 +1149,8 @@ function render(){
       c.fillStyle=g; c.beginPath(); c.moveTo(-SB*.45,SL*.45); c.quadraticCurveTo(0,SL*(.55+.5*fl),SB*.45,SL*.45); c.closePath(); c.fill(); }
     drawTop(c,sh.cfg,SL,SB,t);
     c.restore();
+    if(sh.stopT>0){ const fr=1-sh.stopT/STOPTIME; c.lineWidth=6; c.strokeStyle='rgba(0,30,50,.35)'; c.beginPath(); c.arc(sh.x,-sh.p,SL*.45,0,7); c.stroke();
+      c.strokeStyle='#ffc928'; c.beginPath(); c.arc(sh.x,-sh.p,SL*.45,-Math.PI/2,-Math.PI/2+fr*Math.PI*2); c.stroke(); }
   }
   for(const q of G.parts){ if(q.kind==='foam') continue; const a=q.life/q.max;
     if(q.kind==='ring'){ c.strokeStyle='rgba(255,255,255,'+(a*.8).toFixed(3)+')'; c.lineWidth=3; c.beginPath(); c.arc(q.x,-q.p,q.r,0,7); c.stroke(); continue; }
@@ -1088,6 +1193,7 @@ requestAnimationFrame(frame);
   });
   const group=(sel,key,attr)=>{ document.querySelectorAll(sel).forEach(b=>b.addEventListener('click',()=>{ G[key]=b.dataset[attr]; document.querySelectorAll(sel).forEach(o=>o.setAttribute('aria-pressed',o===b?'true':'false')); })); };
   group('#tracks .tile','theme','track'); group('#speeds .speed','speed','speed'); group('#lengths .speed','len','len');
+  document.querySelectorAll('#counts .speed').forEach(b=>b.addEventListener('click',()=>{ G.count=+b.dataset.count; document.querySelectorAll('#counts .speed').forEach(o=>o.setAttribute('aria-pressed',o===b?'true':'false')); }));
 })();
 
 $('#go').addEventListener('click',startRace);
